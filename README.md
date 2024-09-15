@@ -25,3 +25,24 @@ struct ContentView: View {
     }
 }
 ```
+## Workround
+
+We can avoid this issue by disabling the Collections feature in PhotosPicker. However this API isn't exposed in SwiftUI. You have bridge your SwiftUI view to use `PHPickerViewController`, which is the underlying part in `PhotosPicker`.
+
+```swift
+private func createNewInstance(sizeLimit: Int) -> PHPickerViewController {    
+    var configuration = PHPickerConfiguration(photoLibrary: .shared())
+    configuration.filter = PHPickerFilter.any(of: [.images])
+    configuration.preferredAssetRepresentationMode = .current
+    configuration.selection = .ordered
+    configuration.selectionLimit = sizeLimit
+    
+    // Workaround to prevent users navigate to the Collections tab, which will crash.
+    // https://developer.apple.com/documentation/uikit/view_controllers/collaborating_and_sharing_copies_of_your_data
+    if #available(iOS 18.0, *) {
+        configuration.disabledCapabilities = [.collectionNavigation]
+    }
+    
+    return PHPickerViewController(configuration: configuration)
+}
+```
